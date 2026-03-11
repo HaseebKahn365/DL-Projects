@@ -41,7 +41,7 @@ class Value:
         out = Value(0 if self.data <0 else self.data, (self,), 'ReLU')
         
         def _backward():
-            self.grad = (out.grad>0) * out.grad
+            self.grad += (out.data > 0) * out.grad
         out._backward = _backward
         return out
 
@@ -63,19 +63,20 @@ class Value:
     def __neg__(self):
         return self* -1
 
-    def radd(self,other):
-        return self+(-other)
+    def __radd__(self, other):
+        return self + other
 
-    def sub(self, other):
+    def __sub__(self, other):
         return self + (-other)
-    def rsub(self, other):
-        return other+(-self)
 
-    def rmul(self, other):
+    def __rsub__(self, other):
+        return other + (-self)
+
+    def __rmul__(self, other):
         return self * other
     
     def __truediv__(self, other):
-        return self, other**-1
+        return self * other**-1
     def __rtruediv__(self, other):
         return other * self**-1
     def __repr__(self):
