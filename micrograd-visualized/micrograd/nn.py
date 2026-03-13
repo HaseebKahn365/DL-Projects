@@ -1,5 +1,6 @@
 import random
 from .engine import Value
+from .debugger import TrainingDebugger
 
 class Module:
     def zero_grad(self):
@@ -16,6 +17,7 @@ class Neuron(Module):
         self.nonlin = nonlin
     
     def __call__(self, x):
+        self._last_input = list(x)  # Store for debugger: actual input values (Value objects)
         act = sum((wi*xi for wi, xi in zip(self.w, x)), self.b)
         return act.relu() if self.nonlin else act
     
@@ -43,6 +45,14 @@ class MLP(Module):
     def __init__(self, nin, nouts):
         sz = [nin] + nouts
         self.layers = [Layer(sz[i], sz[i+1], nonlin=i != len(nouts)-1) for i in range(len(nouts))]
+        self._debugger = TrainingDebugger(self)
+
+    def record(self, *args, **kwargs):
+        self._debugger.record(*args, **kwargs)
+
+    def show(self):
+        self._debugger.show()
+
     def __call__(self,x):
         for layer in self.layers:
             x = layer(x)
