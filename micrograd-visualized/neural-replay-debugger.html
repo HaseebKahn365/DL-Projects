@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Replay Debugger</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07101d;--panel:#0d1929;--raised:#111f30;--surface:#162435;
+  --border:#1c2e42;--border2:#243d57;
+  --t1:#cee0f5;--t2:#5a7fa0;--tdim:#2d4560;
+  --blue:#2f8fff;--cyan:#00ccf5;--green:#00dfa0;--amber:#f5a020;--red:#ff3d5a;
+}
+body{
+  background:var(--bg);color:var(--t1);
+  font-family:ui-monospace,'Cascadia Code','JetBrains Mono',monospace;
+  height:100vh;overflow:hidden;
+  display:flex;flex-direction:column;gap:5px;padding:7px;
+}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:5px;overflow:hidden;display:flex;flex-direction:column}
+.ph{background:var(--surface);border-bottom:1px solid var(--border);padding:4px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.pt{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t2)}
+.badge{font-size:8px;padding:1px 6px;border-radius:3px;background:var(--raised);border:1px solid var(--border2);color:var(--cyan);letter-spacing:.06em}
+#top{height:19%;display:grid;grid-template-columns:130px 1fr;gap:5px;flex-shrink:0}
+#mid{flex:1;display:grid;grid-template-columns:120px 1fr 1.1fr 1.5fr;gap:5px;min-height:0}
+#ctrl{height:62px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 12px;background:var(--panel);border:1px solid var(--border);border-radius:5px}
+.metric-grid{display:grid;grid-template-rows:1fr 1fr 1fr;gap:3px;padding:6px;flex-grow:1}
+.metric{background:var(--raised);border:1px solid var(--border);border-radius:3px;padding:3px 8px;display:flex;flex-direction:column;justify-content:center}
+.ml{font-size:7px;color:var(--tdim);letter-spacing:.1em;text-transform:uppercase}
+.mv{font-size:14px;font-weight:700;line-height:1.2}
+#chart-canvas{display:block;width:100%;flex-grow:1}
+#hmap{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:7px;flex-grow:1}
+.hcell{border-radius:3px;border:1px solid var(--border);transition:background .18s;min-height:22px}
+#arch-wrap{flex-grow:1;position:relative;background:#04090f}
+#arch-svg{width:100%;height:100%;display:block}
+#pinsp{flex-grow:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:12px;background:#04090f}
+#pinsp::-webkit-scrollbar{width:3px}
+#pinsp::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.lb{display:flex;flex-direction:column;gap:6px}
+.ltitle{font-size:7.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);padding-bottom:4px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between}
+.ms{display:flex;flex-direction:column;gap:3px}
+.mlabel{font-size:6.5px;color:var(--tdim);letter-spacing:.1em;text-transform:uppercase}
+.mgrid{display:inline-grid;gap:2px;background:var(--raised);padding:2px;border-radius:3px;border:1px solid var(--border)}
+.mc{width:26px;height:20px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:600;border-radius:2px;cursor:default;color:rgba(255,255,255,.8);transition:background-color .12s;position:relative}
+.mc:hover::after{content:attr(data-v);position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:#000;color:var(--cyan);font-size:7px;padding:1px 4px;border-radius:2px;white-space:nowrap;z-index:99;border:1px solid var(--border2);pointer-events:none}
+@keyframes cf{0%{outline:2px solid var(--amber);outline-offset:-1px}80%{outline:2px solid var(--amber);outline-offset:-1px}100%{outline:0 solid transparent}}
+.flash{animation:cf .5s ease-out}
+#cg-wrap{flex-grow:1;position:relative;background:#04090f}
+#cg-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--tdim)}
+#cg-ph span{font-size:8px;letter-spacing:.15em;text-transform:uppercase}
+#cg-svg{width:100%;height:100%;display:block}
+.btn{font-family:inherit;font-size:9px;font-weight:700;letter-spacing:.08em;padding:7px 14px;border-radius:4px;border:1px solid var(--border2);background:var(--raised);color:var(--t1);cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--surface);border-color:var(--blue);color:var(--cyan)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#4fa0ff}
+.tl-wrap{flex:1;display:flex;flex-direction:column;gap:4px}
+.tl-labels{display:flex;justify-content:space-between}
+.tl-label{font-size:7.5px;color:var(--tdim);letter-spacing:.08em}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--raised);border-radius:2px;border:1px solid var(--border);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--cyan);border:2px solid var(--bg);box-shadow:0 0 7px var(--cyan)}
+</style>
+</head>
+<body>
+
+<div id="top">
+  <div class="panel">
+    <div class="ph"><span class="pt">Metrics</span></div>
+    <div class="metric-grid">
+      <div class="metric"><div class="ml">Iteration</div><div class="mv" id="m-iter" style="color:var(--cyan)">0</div></div>
+      <div class="metric"><div class="ml">Loss</div><div class="mv" id="m-loss" style="color:var(--red)">0.0000</div></div>
+      <div class="metric"><div class="ml">Accuracy</div><div class="mv" id="m-acc" style="color:var(--green)">0.0%</div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph">
+      <span class="pt">Training Overview</span>
+      <div style="display:flex;gap:8px">
+        <span class="badge" style="color:var(--cyan)">&#9632; LOSS</span>
+        <span class="badge" style="color:var(--green)">&#9632; ACC</span>
+      </div>
+    </div>
+    <canvas id="chart-canvas"></canvas>
+  </div>
+</div>
+
+<div id="mid">
+  <div class="panel">
+    <div class="ph"><span class="pt">Sample Map</span></div>
+    <div id="hmap"></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Network Structure</span><span class="badge">2 &rarr; 16 &rarr; 1</span></div>
+    <div id="arch-wrap"><svg id="arch-svg"></svg></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Layer Parameters</span><span class="badge" id="p-badge">STEP 0</span></div>
+    <div id="pinsp"></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Neuron Execution Graph</span><span class="badge" id="n-badge" style="color:var(--tdim)">none</span></div>
+    <div id="cg-wrap">
+      <div id="cg-ph">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" opacity=".25">
+          <circle cx="7" cy="18" r="5" stroke="#5a7fa0" stroke-width="1.5"/>
+          <circle cx="29" cy="9" r="4" stroke="#5a7fa0" stroke-width="1.5"/>
+          <circle cx="29" cy="27" r="4" stroke="#5a7fa0" stroke-width="1.5"/>
+          <line x1="12" y1="16" x2="25" y2="11" stroke="#5a7fa0" stroke-width="1"/>
+          <line x1="12" y1="20" x2="25" y2="25" stroke="#5a7fa0" stroke-width="1"/>
+        </svg>
+        <span>Select a neuron</span>
+      </div>
+      <svg id="cg-svg"></svg>
+    </div>
+  </div>
+</div>
+
+<div id="ctrl">
+  <button class="btn primary" id="play-btn">&#9654; PLAY</button>
+  <button class="btn" id="step-btn">STEP &rarr;</button>
+  <div class="tl-wrap">
+    <input type="range" id="timeline" min="0" max="99" value="0">
+    <div class="tl-labels">
+      <span class="tl-label" id="tl-val">STEP 0 / 99</span>
+      <span class="tl-label" style="color:var(--blue);letter-spacing:.18em">TRAINING TIMELINE</span>
+      <span class="tl-label">EPOCH 100</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const STEPS=100, LAYERS=[2,16,1];
+const LAYER_LABELS=['IN','H','OUT'];
+const LAYER_COLORS=['#5a7fa0','#2f8fff','#f5a020'];
+
+// seeded prng
+function mkRng(seed){let s=seed;return()=>{s=(s*9301+49297)%233280;return s/233280;};}
+
+// data
+const history=(()=>{
+  const r=mkRng(42);
+  const loss=Array.from({length:STEPS},(_,i)=>Math.exp(-i/30)*1.5+r()*.05+.02);
+  const accuracy=Array.from({length:STEPS},(_,i)=>(1-Math.exp(-i/20))*97+r());
+  const heatmap=Array.from({length:STEPS},()=>Array.from({length:8},()=>r()));
+  const bw=LAYERS.slice(1).map((sz,li)=>Array.from({length:sz},(_,ni)=>Array.from({length:LAYERS[li]},()=>(r()*2-1)*.5)));
+  const bb=LAYERS.slice(1).map((sz)=>Array.from({length:sz},()=>(r()*2-1)*.1));
+  const params=Array.from({length:STEPS},(_,s)=>
+    LAYERS.slice(1).map((sz,li)=>Array.from({length:sz},(_,ni)=>({
+      weights:Array.from({length:LAYERS[li]},(_,wi)=>bw[li][ni][wi]*Math.tanh(s/20)+Math.sin(s/15+wi*1.3+ni*.7)*(.8*Math.exp(-s/40))+(r()-.5)*.04),
+      bias:bb[li][ni]+Math.cos(s/20+ni)*.1*Math.exp(-s/50),
+      grad:r()*.02*Math.exp(-s/25)
+    })))
+  );
+  return{loss,accuracy,heatmap,params};
+})();
+
+let step=0,playing=false,selNeuron=null,raf=null,lastT=0;
+
+function wColor(v){
+  v=Math.max(-1,Math.min(1,v));const t=Math.abs(v);
+  return v<0?`rgb(${Math.round(120+t*120)},${Math.round(35+35*(1-t))},${Math.round(35+35*(1-t))})`:
+              `rgb(${Math.round(20+30*(1-t))},${Math.round(70+80*t)},${Math.round(140+110*t)})`;
+}
+function tColor(v){return Math.abs(v)>.38?'rgba(255,255,255,.9)':'rgba(255,255,255,.45)';}
+
+// inspector setup
+function setupInspector(){
+  const el=document.getElementById('pinsp');el.innerHTML='';
+  const names=['Input \u2192 Hidden','Hidden \u2192 Output'];
+  LAYERS.slice(1).forEach((sz,li)=>{
+    const prev=LAYERS[li];
+    const block=document.createElement('div');block.className='lb';
+    const title=document.createElement('div');title.className='ltitle';
+    title.innerHTML=`<span>L${li+1} \u2014 ${names[li]}</span><span style="color:var(--t2);font-size:6.5px">${sz}\u00d7${prev}</span>`;
+    block.appendChild(title);
+    // weights
+    const ws=document.createElement('div');ws.className='ms';
+    ws.innerHTML=`<div class="mlabel">Weights (${sz}\u00d7${prev})</div>`;
+    const wg=document.createElement('div');wg.className='mgrid';
+    wg.style.gridTemplateColumns=`repeat(${prev},26px)`;
+    for(let rr=0;rr<sz;rr++)for(let c=0;c<prev;c++){
+      const d=document.createElement('div');d.className='mc';
+      d.id=`w${li}_${rr}_${c}`;d.setAttribute('data-v','0.0000');wg.appendChild(d);
+    }
+    ws.appendChild(wg);block.appendChild(ws);
+    // bias
+    const bs=document.createElement('div');bs.className='ms';
+    bs.innerHTML=`<div class="mlabel">Bias (${sz}\u00d71)</div>`;
+    const bg=document.createElement('div');bg.className='mgrid';
+    bg.style.gridTemplateColumns='repeat(1,26px)';
+    for(let rr=0;rr<sz;rr++){
+      const d=document.createElement('div');d.className='mc';
+      d.id=`b${li}_${rr}`;d.setAttribute('data-v','0.0000');bg.appendChild(d);
+    }
+    bs.appendChild(bg);block.appendChild(bs);
+    el.appendChild(block);
+  });
+}
+
+function doFlash(el){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
+
+function updateInspector(s){
+  const cur=history.params[s],prev=s>0?history.params[s-1]:null;
+  cur.forEach((layer,li)=>layer.forEach((n,ni)=>{
+    n.weights.forEach((w,wi)=>{
+      const el=document.getElementById(`w${li}_${ni}_${wi}`);if(!el)return;
+      const old=prev?prev[li][ni].weights[wi]:w;
+      el.style.backgroundColor=wColor(w);el.style.color=tColor(w);
+      el.textContent=w.toFixed(2);el.setAttribute('data-v',w.toFixed(4));
+      if(Math.abs(w-old)>.04)doFlash(el);
+    });
+    const bel=document.getElementById(`b${li}_${ni}`);if(!bel)return;
+    const old=prev?prev[li][ni].bias:n.bias;
+    bel.style.backgroundColor=wColor(n.bias);bel.style.color=tColor(n.bias);
+    bel.textContent=n.bias.toFixed(2);bel.setAttribute('data-v',n.bias.toFixed(4));
+    if(Math.abs(n.bias-old)>.03)doFlash(bel);
+  }));
+}
+
+// canvas chart
+const cc=document.getElementById('chart-canvas');
+const ctx2d=cc.getContext('2d');
+function drawChart(){
+  const W=cc.parentElement.clientWidth,H=cc.parentElement.clientHeight-cc.parentElement.querySelector('.ph').offsetHeight;
+  cc.width=W;cc.height=H;if(!W||!H)return;
+  const pad={t:8,r:36,b:18,l:36},cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  ctx2d.clearRect(0,0,W,H);
+  // grid lines
+  ctx2d.strokeStyle='#1c2e42';ctx2d.lineWidth=.6;
+  for(let i=0;i<=4;i++){const y=pad.t+ch*i/4;ctx2d.beginPath();ctx2d.moveTo(pad.l,y);ctx2d.lineTo(pad.l+cw,y);ctx2d.stroke();}
+  const toX=i=>pad.l+i/99*cw;
+  const maxL=Math.max(...history.loss);
+  // loss fill
+  ctx2d.beginPath();
+  history.loss.forEach((v,i)=>{const x=toX(i),y=pad.t+ch*(1-v/maxL);i===0?ctx2d.moveTo(x,y):ctx2d.lineTo(x,y);});
+  ctx2d.lineTo(toX(99),pad.t+ch);ctx2d.lineTo(toX(0),pad.t+ch);ctx2d.closePath();
+  ctx2d.fillStyle='rgba(47,143,255,.07)';ctx2d.fill();
+  // loss line
+  ctx2d.beginPath();ctx2d.strokeStyle='#2f8fff';ctx2d.lineWidth=1.5;
+  history.loss.forEach((v,i)=>{const x=toX(i),y=pad.t+ch*(1-v/maxL);i===0?ctx2d.moveTo(x,y):ctx2d.lineTo(x,y);});
+  ctx2d.stroke();
+  // acc line
+  ctx2d.beginPath();ctx2d.strokeStyle='#00dfa0';ctx2d.lineWidth=1.5;ctx2d.setLineDash([3,3]);
+  history.accuracy.forEach((v,i)=>{const x=toX(i),y=pad.t+ch*(1-v/100);i===0?ctx2d.moveTo(x,y):ctx2d.lineTo(x,y);});
+  ctx2d.stroke();ctx2d.setLineDash([]);
+  // cursor
+  const cx=toX(step);
+  ctx2d.strokeStyle='#f5a020';ctx2d.lineWidth=1.5;
+  ctx2d.beginPath();ctx2d.moveTo(cx,pad.t);ctx2d.lineTo(cx,pad.t+ch);ctx2d.stroke();
+  // dot on loss
+  const ly=pad.t+ch*(1-history.loss[step]/maxL);
+  ctx2d.beginPath();ctx2d.arc(cx,ly,3.5,0,Math.PI*2);ctx2d.fillStyle='#f5a020';ctx2d.fill();
+}
+
+// svg helpers
+function se(tag,attrs){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const[k,v]of Object.entries(attrs))el.setAttribute(k,v);
+  return el;
+}
+
+// architecture
+function drawArch(){
+  const svg=document.getElementById('arch-svg');svg.innerHTML='';
+  const W=svg.parentElement.clientWidth,H=svg.parentElement.clientHeight;if(!W||!H)return;
+  const lx=LAYERS.map((_,l)=>(l+1)*W/(LAYERS.length+1));
+  // connections
+  LAYERS.forEach((n,l)=>{
+    if(l>=LAYERS.length-1)return;const nx=LAYERS[l+1];
+    for(let i=0;i<n;i++)for(let j=0;j<nx;j++){
+      const y1=(i+1)*H/(n+1),y2=(j+1)*H/(nx+1);
+      const sel=selNeuron&&((selNeuron.l===l+1&&selNeuron.i===j)||(selNeuron.l===l&&selNeuron.i===i));
+      svg.appendChild(se('line',{x1:lx[l],y1,x2:lx[l+1],y2,stroke:sel?'#2f8fff':'#1c2e42','stroke-width':sel?1.4:.7,opacity:sel?.75:.5}));
+    }
+  });
+  // labels
+  LAYERS.forEach((_,l)=>{
+    const t=se('text',{x:lx[l],y:H-5,'text-anchor':'middle',fill:LAYER_COLORS[l],'font-size':8,'font-family':'monospace','font-weight':700});
+    t.textContent=`${LAYER_LABELS[l]}(${LAYERS[l]})`;svg.appendChild(t);
+  });
+  // neurons
+  LAYERS.forEach((n,l)=>{
+    for(let i=0;i<n;i++){
+      const y=(i+1)*H/(n+1),isSel=selNeuron&&selNeuron.l===l&&selNeuron.i===i;
+      const r=l===1?(isSel?8:5.5):(isSel?9:7);
+      const c=se('circle',{cx:lx[l],cy:y,r,fill:LAYER_COLORS[l],'fill-opacity':isSel?1:.45,
+        stroke:isSel?'#f5a020':LAYER_COLORS[l],'stroke-width':isSel?2.5:.8,style:l===0?'cursor:default':'cursor:pointer'});
+      if(isSel)c.setAttribute('filter','drop-shadow(0 0 5px #f5a020)');
+      if(l>0)c.addEventListener('click',()=>{
+        selNeuron={l,i};
+        document.getElementById('cg-ph').style.display='none';
+        document.getElementById('n-badge').textContent=`L${l}\u00b7N${i}`;
+        document.getElementById('n-badge').style.color='var(--cyan)';
+        drawArch();drawCompGraph();
+      });
+      svg.appendChild(c);
+    }
+  });
+}
+
+// comp graph
+function drawCompGraph(){
+  const svg=document.getElementById('cg-svg');svg.innerHTML='';
+  if(!selNeuron||selNeuron.l===0)return;
+  const W=svg.parentElement.clientWidth,H=svg.parentElement.clientHeight;if(!W||!H)return;
+  const li=selNeuron.l-1,ni=selNeuron.i,p=history.params[step][li][ni];
+  const inCnt=LAYERS[selNeuron.l-1];
+  const inputs=Array.from({length:inCnt},(_,i)=>Math.sin(step/10+i*.8)*.6);
+  let raw=p.bias;inputs.forEach((x,i)=>{raw+=x*p.weights[i];});
+  const out=Math.tanh(raw);
+  const lim=Math.min(inCnt,4),sp=40,cY=H/2;
+  // arrow marker
+  const defs=se('defs',{});const mk=se('marker',{id:'arr',viewBox:'0 0 8 8',refX:8,refY:4,markerWidth:5,markerHeight:5,orient:'auto'});
+  mk.appendChild(se('path',{d:'M0 0 L8 4 L0 8z',fill:'#243d57'}));defs.appendChild(mk);svg.appendChild(defs);
+  const outX=W-42,tX=W-108,addX=W-178,mulX=addX-68,inX=34;
+  const nodes=[
+    {id:'out',x:outX,y:cY,label:'out',val:out,type:'val',isOut:true},
+    {id:'tanh',x:tX,y:cY,label:'tanh',type:'op'},
+    {id:'add',x:addX,y:cY,label:'+',type:'op'},
+    {id:'bias',x:addX-55,y:cY+(lim*sp/2)+18,label:'b',val:p.bias,type:'val'},
+  ];
+  const links=[['tanh','out'],['add','tanh'],['bias','add']];
+  for(let i=0;i<lim;i++){
+    const yy=cY-((lim-1)*sp/2)+i*sp;
+    nodes.push({id:`mul${i}`,x:mulX,y:yy,label:'\u00d7',type:'op'});
+    nodes.push({id:`w${i}`,x:inX+10,y:yy-13,label:`w${i}`,val:p.weights[i],type:'val',isW:true});
+    nodes.push({id:`x${i}`,x:inX+10,y:yy+13,label:`x${i}`,val:inputs[i],type:'val'});
+    links.push([`mul${i}`,'add'],[`w${i}`,`mul${i}`],[`x${i}`,`mul${i}`]);
+  }
+  const nm=Object.fromEntries(nodes.map(n=>[n.id,n]));
+  links.forEach(([a,b])=>{
+    const s=nm[a],t=nm[b];
+    svg.appendChild(se('line',{x1:s.x,y1:s.y,x2:t.x,y2:t.y,stroke:'#243d57','stroke-width':1.2,'marker-end':'url(#arr)'}));
+  });
+  nodes.forEach(n=>{
+    if(n.type==='op'){
+      svg.appendChild(se('circle',{cx:n.x,cy:n.y,r:10,fill:'#243d57',stroke:'#2f8fff','stroke-width':1}));
+      const t=se('text',{x:n.x,y:n.y+3.5,'text-anchor':'middle',fill:'#cee0f5','font-size':11,'font-family':'monospace'});
+      t.textContent=n.label;svg.appendChild(t);
+    } else {
+      const bg=n.isW?wColor(n.val):'#111f30',strokeC=n.isOut?'#00ccf5':(n.isW?wColor(n.val):'#243d57');
+      svg.appendChild(se('rect',{x:n.x-26,y:n.y-11,width:52,height:22,rx:3,
+        fill:n.isOut?'rgba(0,204,245,.1)':bg,stroke:strokeC,'stroke-width':1}));
+      const lbl=se('text',{x:n.x,y:n.y-13,'text-anchor':'middle',fill:'#2d4560','font-size':7,'font-family':'monospace','letter-spacing':1});
+      lbl.textContent=n.label.toUpperCase();svg.appendChild(lbl);
+      const vt=se('text',{x:n.x,y:n.y+3.5,'text-anchor':'middle',fill:n.isOut?'#00ccf5':'#cee0f5','font-size':8,'font-family':'monospace','font-weight':700});
+      vt.textContent=n.val!==undefined?n.val.toFixed(3):'';svg.appendChild(vt);
+    }
+  });
+}
+
+// heatmap
+const hm=document.getElementById('hmap');
+for(let i=0;i<8;i++){const d=document.createElement('div');d.className='hcell';d.id=`hc${i}`;hm.appendChild(d);}
+
+// update
+function updateUI(){
+  document.getElementById('m-iter').textContent=step;
+  document.getElementById('m-loss').textContent=history.loss[step].toFixed(4);
+  document.getElementById('m-acc').textContent=history.accuracy[step].toFixed(1)+'%';
+  document.getElementById('tl-val').textContent=`STEP ${step} / 99`;
+  document.getElementById('p-badge').textContent=`STEP ${step}`;
+  document.getElementById('timeline').value=step;
+  history.heatmap[step].forEach((v,i)=>{
+    const c=document.getElementById(`hc${i}`);
+    if(c)c.style.background=`rgba(0,${Math.round(80+v*160)},${Math.round(160+v*80)},${.12+v*.75})`;
+  });
+  drawChart();updateInspector(step);drawCompGraph();
+}
+
+// controls
+document.getElementById('timeline').oninput=e=>{step=+e.target.value;updateUI();};
+document.getElementById('step-btn').onclick=()=>{step=(step+1)%STEPS;updateUI();};
+document.getElementById('play-btn').onclick=()=>{
+  playing=!playing;
+  document.getElementById('play-btn').textContent=playing?'\u23f8 PAUSE':'\u25b6 PLAY';
+  if(playing)raf=requestAnimationFrame(loop);
+  else if(raf){cancelAnimationFrame(raf);raf=null;}
+};
+function loop(ts){
+  if(!playing)return;
+  if(ts-lastT>145){lastT=ts;step=(step+1)%STEPS;updateUI();}
+  raf=requestAnimationFrame(loop);
+}
+window.addEventListener('resize',()=>{drawArch();drawChart();drawCompGraph();});
+
+// boot
+setupInspector();drawArch();updateUI();
+</script>
+</body>
+</html>
