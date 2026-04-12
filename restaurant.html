@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Development Roadmap & Feature Costing</title>
+
+    <style>
+        :root {
+            --primary: #FF6B00;
+            --bg: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #666666;
+            --shadow: none;
+            --border-radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 50px;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+        header { padding: 60px 0; text-align: center; }
+
+        h1 { font-size: 2.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .description { max-width: 800px; margin: 0 auto; color: var(--text-light); font-size: 1rem; }
+
+        section { margin-top: 60px; }
+
+        .section-title {
+            font-size: 1.6rem;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary);
+            display: inline-block;
+        }
+
+        .screen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .screen-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eee;
+        }
+
+        .screen-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .placeholder-mobile {
+            width: 260px;
+            height: 520px;
+            border: 1px dashed #ccc;
+            border-radius: 20px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fdfdfd;
+            color: #aaa;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .placeholder-long {
+            width: 100%;
+            height: 420px;
+            border: 1px dashed #ccc;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fdfdfd;
+            color: #aaa;
+        }
+
+        .feature-context {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .screen-desc {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 16px;
+            min-height: 50px;
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .features-list li {
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            color: #444;
+        }
+
+        .features-list li::before {
+            content: "→";
+            color: var(--primary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .cost-container {
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cost-label { font-size: 0.8rem; color: #888; font-weight: 600; }
+
+        .cost-value {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .summary-card {
+            background: #1a1a1a;
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 40px;
+            margin-top: 80px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 25px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .screen-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- TITLE SECTION -->
+        <header>
+            <div class="subtitle">Technical & Financial Proposal</div>
+            <h1>Feature Roadmap & Development Costing</h1>
+            <p class="description">This document outlines the engineering requirements, functional logic, and development costs for each module of the Restaurant Application. Costs include frontend development, backend API integration, and database architecture.</p>
+        </header>
+
+        <div class="placeholder-long">Full App Preview (Combined Screens)</div>
+
+        <!-- VISITOR SCREENS SECTION -->
+        <section>
+            <h2 class="section-title">Visitor Module Development</h2>
+            <div class="screen-grid">
+                
+                <div class="screen-card">
+                    <div class="feature-context">Implementation</div>
+                    <h3 class="screen-title">1. Welcome & Onboarding</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Building a high-performance entry point with localized authentication and cultural branding.</p>
+                    <ul class="features-list">
+                        <li>OTP-based Phone Authentication</li>
+                        <li>Social login (Google/Facebook)</li>
+                        <li>Bilingual UI (Urdu/English) support</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 10,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Geofencing</div>
+                    <h3 class="screen-title">2. Location Selection</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Integration of Google Maps API for precise delivery geofencing and branch allocation logic.</p>
+                    <ul class="features-list">
+                        <li>Real-time Lat/Long coordinate capture</li>
+                        <li>Reverse geocoding for address auto-fill</li>
+                        <li>Polygon-based delivery zone validation</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 12,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Catalog Engine</div>
+                    <h3 class="screen-title">3. Home / Menu Screen</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">The primary interface for browsing Pakistani staples (Biryani, Nihari) with category-based filtering.</p>
+                    <ul class="features-list">
+                        <li>Dynamic menu fetching via REST API</li>
+                        <li>Multi-category horizontal navigation</li>
+                        <li>Smart search & auto-complete</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 25,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Logic & Modifiers</div>
+                    <h3 class="screen-title">4. Food Detail Screen</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Complex logic for dish customization, including spice levels for Karahis and optional add-ons.</p>
+                    <ul class="features-list">
+                        <li>Variant handling (Single vs. Full plate)</li>
+                        <li>Conditional modifier pricing logic</li>
+                        <li>High-res asset loading optimization</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 15,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">State Management</div>
+                    <h3 class="screen-title">5. Cart Screen</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Local state management to handle persistent baskets across app sessions.</p>
+                    <ul class="features-list">
+                        <li>Cross-session cart persistence</li>
+                        <li>Voucher validation logic engine</li>
+                        <li>Automatic tax/delivery fee calculation</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 12,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Gateway Integration</div>
+                    <h3 class="screen-title">6. Checkout Screen</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Secure payment processing focusing on Pakistani payment habits like COD and Easypaisa/JazzCash.</p>
+                    <ul class="features-list">
+                        <li>Payment gateway API integration</li>
+                        <li>Scheduled delivery time slotting</li>
+                        <li>Final order payload verification</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 18,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Real-time Sync</div>
+                    <h3 class="screen-title">7. Order Tracking</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Real-time socket connection for live updates between the kitchen, rider, and customer.</p>
+                    <ul class="features-list">
+                        <li>WebSocket-based order status updates</li>
+                        <li>Google Maps Rider Tracking integration</li>
+                        <li>Push notification trigger system</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 15,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">CRM Logic</div>
+                    <h3 class="screen-title">8. Rewards / Points</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Gamified loyalty engine to reward frequent orders with digital credits.</p>
+                    <ul class="features-list">
+                        <li>Point accumulation algorithm</li>
+                        <li>Referral tracking system</li>
+                        <li>Tiered membership unlock logic</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 10,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Data Sync</div>
+                    <h3 class="screen-title">9. Profile Screen</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">User data management center for past orders, saved addresses, and security settings.</p>
+                    <ul class="features-list">
+                        <li>Order history with "Reorder" logic</li>
+                        <li>Encrypted profile storage</li>
+                        <li>Customer support chat integration</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 13,000</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- MANAGER SCREENS SECTION -->
+        <section>
+            <h2 class="section-title">Manager Module Development</h2>
+            <div class="screen-grid">
+
+                <div class="screen-card">
+                    <div class="feature-context">Analytics Engine</div>
+                    <h3 class="screen-title">1. Dashboard (Stats)</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Data aggregation layer that translates raw orders into actionable business insights.</p>
+                    <ul class="features-list">
+                        <li>Daily/Monthly revenue charting</li>
+                        <li>Average order value (AOV) tracking</li>
+                        <li>Branch-wise performance metrics</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 25,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Inventory Control</div>
+                    <h3 class="screen-title">2. Menu Management</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Administrative interface for real-time inventory and pricing adjustments.</p>
+                    <ul class="features-list">
+                        <li>Master inventory toggle (In/Out of stock)</li>
+                        <li>Price fluctuation management</li>
+                        <li>Product imagery & description updates</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 20,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Logistics Ops</div>
+                    <h3 class="screen-title">3. Live Order Queue</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">The operations hub for managing incoming orders and dispatching riders.</p>
+                    <ul class="features-list">
+                        <li>Interactive kitchen management board</li>
+                        <li>Rider assignment & payout tracking</li>
+                        <li>Delay alert & priority queueing</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 20,000</span>
+                    </div>
+                </div>
+
+                <div class="screen-card">
+                    <div class="feature-context">Campaign Logic</div>
+                    <h3 class="screen-title">4. Promotions Management</h3>
+                    <div class="placeholder-mobile">Insert Screen Here</div>
+                    <p class="screen-desc">Marketing module for creating and deploying app-wide sales campaigns.</p>
+                    <ul class="features-list">
+                        <li>Dynamic banner scheduling</li>
+                        <li>Coupan code generation engine</li>
+                        <li>Campaign ROI tracking statistics</li>
+                    </ul>
+                    <div class="cost-container">
+                        <span class="cost-label">DEV COST</span>
+                        <span class="cost-value">Rs. 15,000</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- BUDGET SUMMARY SECTION -->
+        <section>
+            <div class="summary-card">
+                <h2 style="color: var(--primary); margin-bottom: 20px;">Project Development Budget</h2>
+                <div class="summary-item">
+                    <span>Visitor Frontend & API Integration (9 Screens)</span>
+                    <span>Rs. 1,30,000</span>
+                </div>
+                <div class="summary-item">
+                    <span>Manager Operations & Admin Backend (4 Screens)</span>
+                    <span>Rs. 80,000</span>
+                </div>
+                <div class="summary-item" style="border-bottom: none;">
+                    <span>UI Design, Animation, & System Integration Buffer</span>
+                    <span>Rs. 20,000</span>
+                </div>
+                <div class="summary-total">
+                    <span>Grand Total Project Cost</span>
+                    <span>Rs. 2,30,000</span>
+                </div>
+                <p style="margin-top: 25px; font-size: 0.85rem; color: #888; text-align: center;">This cost includes end-to-end development, testing, and deployment to staging environments.</p>
+            </div>
+        </section>
+    </div>
+
+</body>
+</html>
